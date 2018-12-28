@@ -24,9 +24,14 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.ViewHolder>() {
     }
 
     override fun getItemCount(): Int = items.size
-
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
         val imgThumbnail = itemView.imgThumbnail
         val txtName = itemView.txtName
+    }
+
+    fun add(character: Character) {
+        items.add(character)
+        notifyItemInserted(items.lastIndex)
     }
 }
