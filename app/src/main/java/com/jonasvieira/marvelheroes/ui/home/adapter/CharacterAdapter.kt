@@ -29,4 +29,9 @@ class CharacterAdapter : RecyclerView.Adapter<CharacterAdapter.ViewHolder>() {
         val imgThumbnail = itemView.imgThumbnail
         val txtName = itemView.txtName
     }
+
+    fun add(character: Character) {
+        items.add(character)
+        notifyItemInserted(items.lastIndex)
+    }
 }
