@@ -1,43 +1,46 @@
 package com.jonasvieira.marvelheroes.ui.home
 
 import android.arch.lifecycle.ViewModel
+import android.arch.paging.PagedList
+import android.arch.paging.RxPagedListBuilder
+import com.jonasvieira.marvelheroes.ui.home.paging.CharacterDataSourceFactory
 import com.jonasvieira.marvelheroes.model.Character
 import com.jonasvieira.marvelheroes.services.MarvelApi
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 
 class CharactersViewModel : ViewModel() {
 
-    var isLoading: Boolean = false
-        private set
+    var characterList: Observable<PagedList<Character>>
 
-    var currentPage = -1
-        private set
+    private val compositeDisposable = CompositeDisposable()
 
-    private val characters = mutableListOf<Character>()
+    private val pagedSize = 20
 
-    fun load(page: Int): Observable<Character> {
-        isLoading = true
+    private val sourceFactory: CharacterDataSourceFactory
 
-        return if (page <= currentPage) {
-            Observable.fromIterable(characters)
-        } else {
-            currentPage = page
-            MarvelApi.getService().allCharacters(page * 20)
-                .flatMapIterable { response ->
-                    response.data.results
-                }
-                .doOnNext { c ->
-                    characters.add(c)
-                    Observable.just(c)
-                }
-        }.doOnComplete {
-            isLoading = false
-        }
+    init {
+        sourceFactory = CharacterDataSourceFactory(
+            compositeDisposable,
+            MarvelApi.getService()
+        )
+
+        val config = PagedList.Config.Builder()
+            .setPageSize(pagedSize)
+            .setInitialLoadSizeHint(pagedSize * 3)
+            .setPrefetchDistance(10)
+            .setEnablePlaceholders(false)
+            .build()
+
+        characterList = RxPagedListBuilder(sourceFactory, config)
+            .setFetchScheduler(Schedulers.io())
+            .buildObservable()
+            .cache()
     }
 
-    fun reset() {
-        isLoading = false
-        currentPage = -1
-        characters.clear()
+    override fun onCleared() {
+        super.onCleared()
+        compositeDisposable.clear()
     }
 }

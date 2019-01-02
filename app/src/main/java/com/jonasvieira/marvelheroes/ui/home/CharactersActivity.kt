@@ -39,16 +39,7 @@ class CharactersActivity : AppCompatActivity() {
         recyclerCharacters.layoutManager = linearLayoutManager
         recyclerCharacters.hasFixedSize()
         recyclerCharacters.adapter = adapter
-        recyclerCharacters.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                val lastVisibleItemPosition = linearLayoutManager.findLastVisibleItemPosition()
-                if (lastVisibleItemPosition == adapter.itemCount - 1 && !viewModel.isLoading) {
-                    loadCharacter(viewModel.currentPage + 1)
-                }
-            }
-        })
-        loadCharacter(viewModel.currentPage + 1)
+        subscribeToList()
     }
 
     override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
@@ -61,22 +52,19 @@ class CharactersActivity : AppCompatActivity() {
         recyclerState = savedInstanceState?.getParcelable("lmState")
     }
 
-    private fun loadCharacter(page: Int) {
-        val disposable = viewModel.load(page)
-            .subscribeOn(Schedulers.io())
+    private fun subscribeToList() {
+        val disposable = viewModel.characterList
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { character ->
-                    adapter.add(character)
-                },
-                { error ->
-                    Log.e("", "error", error)
-                },
-                {
+                { list ->
+                    adapter.submitList(list)
                     if (recyclerState != null) {
                         recyclerCharacters.layoutManager?.onRestoreInstanceState(recyclerState)
                         recyclerState = null
                     }
+                },
+                { e ->
+                    Log.e("NGVL", "Error", e)
                 }
             )
     }
