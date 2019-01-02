@@ -46,7 +46,7 @@ class CharactersDataSource(
                     { error ->
                         Log.e("", "error", error)
                     }
-                )
+                ) 
         )
     }
 }
